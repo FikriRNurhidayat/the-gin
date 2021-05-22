@@ -13,6 +13,7 @@ func main() {
 
 	r.GET("/", controller.Main)
 	r.POST("/v1/login", controller.Login)
+	r.POST("/v1/refresh", controller.Refresh)
 	r.NoRoute(controller.Default)
 
 	r.Run()

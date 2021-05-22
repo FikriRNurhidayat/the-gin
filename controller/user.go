@@ -10,8 +10,6 @@ import (
 
 func Login(c *gin.Context) {
 	var body m.Credential
-	var token m.Token
-
 	c.BindJSON(&body)
 
 	token, err := s.Login(body.Username, body.Password)
@@ -21,4 +19,17 @@ func Login(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, ok("Token created!", token))
+}
+
+func Refresh(c *gin.Context) {
+	var body m.Refresh
+	c.BindJSON(&body)
+
+	token, err := s.Refresh(body.Token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, fail(err.Error(), nil))
+		return
+	}
+
+	c.JSON(http.StatusCreated, ok("Token refreshed!", token))
 }

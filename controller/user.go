@@ -3,6 +3,7 @@ package controller
 import (
 	m "gin-thing/model"
 	s "gin-thing/service"
+
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,4 +33,17 @@ func Refresh(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, ok("Token refreshed!", token))
+}
+
+func Register(c *gin.Context) {
+	var body m.Credential
+	c.BindJSON(&body)
+
+	user, err := s.Register(body.Username, body.Password)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, fail(err.Error(), nil))
+		return
+	}
+
+	c.JSON(http.StatusCreated, ok("Registered!", user))
 }

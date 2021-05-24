@@ -11,18 +11,30 @@ import (
 	mdb "gin-thing/model/database"
 
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Login(username string, password string) (m.Token, error) {
 	var u mdb.User
 	var token m.Token
+
 	user := u.SelectOneByUsername(username)
 
-	if !user.Check(password) {
+	if compare(user.EncryptedPassword, password) != nil {
 		return token, errors.New("wrong password")
 	}
 
-	return createToken(*user), nil
+	return createToken(user), nil
+}
+
+func Register(username string, password string) (*mdb.User, error) {
+	var u mdb.User
+	u, trx := u.Create(username, encrypt(password))
+	if trx.Error != nil {
+		return nil, trx.Error
+	}
+
+	return &u, nil
 }
 
 func Refresh(tokenString string) (m.Token, error) {
@@ -33,7 +45,7 @@ func Refresh(tokenString string) (m.Token, error) {
 		return token, err
 	}
 	user := u.SelectOneByID(payload.Id)
-	token = createToken(*user)
+	token = createToken(user)
 	return token, nil
 }
 
@@ -57,4 +69,13 @@ func generateToken(payload mdb.User, secret []byte, expiresAt int64) string {
 	tokenString, err := token.SignedString(secret)
 	fmt.Println(err)
 	return tokenString
+}
+
+func compare(hash string, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+}
+
+func encrypt(password string) string {
+	hash, _ := bcrypt.GenerateFromPassword([]byte(password), 10)
+	return string(hash)
 }

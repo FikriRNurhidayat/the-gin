@@ -1,33 +1,32 @@
 package database
 
-import "fmt"
+import (
+	"strings"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
-	ID                uint64 `json:"id"`
-	Username          string `json:"username"`
-	EncryptedPassword string `json:"encrypted_password"`
+	gorm.Model
+	Username          string `json:"username" gorm:"uniqueIndex"`
+	EncryptedPassword string `json:"encrypted_password" gorm:"not null"`
 }
 
-var user User = User{
-	ID:                1,
-	Username:          "fain",
-	EncryptedPassword: "123456",
+func (u User) SelectOneByUsername(username string) User {
+	var user User
+	db.Where("username = ?", username).First(&user)
+	return user
 }
 
-func (u User) SelectOneByUsername(username string) *User {
-	if username != user.Username {
-		return nil
-	}
-	return &user
+func (u User) SelectOneByID(id string) User {
+	var user User
+	db.First(&user, id)
+	return user
 }
 
-func (u User) SelectOneByID(id string) *User {
-	if id != fmt.Sprint(user.ID) {
-		return nil
-	}
-	return &user
-}
-
-func (u User) Check(password string) bool {
-	return user.EncryptedPassword == password
+func (u User) Create(username string, encryptedPassword string) (User, *gorm.DB) {
+	u.Username = strings.ToLower(username)
+	u.EncryptedPassword = encryptedPassword
+	trx := db.Create(&u)
+	return u, trx
 }
